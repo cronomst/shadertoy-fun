@@ -1,0 +1,39 @@
+vec4 blur( vec2 coord )
+{
+    float resScale = 1.0 / iResolution.x;
+    vec4 pos1 = texture(iChannel0, coord);
+    vec4 pos2 = texture(iChannel0, vec2(coord.x+(resScale*2.0), coord.y));
+    vec4 pos3 = texture(iChannel0, vec2(coord.x-(resScale*2.0), coord.y));
+    vec4 pos4 = texture(iChannel0, vec2(coord.x+resScale, coord.y));
+    vec4 pos5 = texture(iChannel0, vec2(coord.x-resScale, coord.y));
+    
+    return vec4((pos1.r + pos2.r + pos3.r + pos4.r + pos5.r) / 5.0,
+                (pos1.g + pos2.g + pos3.g + pos4.g + pos5.g) / 5.0,
+                (pos1.b + pos2.b + pos3.b + pos4.b + pos5.b) / 5.0,
+                1.0);
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    float shift = sin(iGlobalTime) * 50.0;
+    
+    vec2 bgxy = fragCoord.xy / iResolution.xy;
+	//vec2 xy = vec2(fragCoord.x + shift, fragCoord.y);
+    vec2 xy = vec2(fragCoord.x, fragCoord.y);
+	xy = xy / iResolution.xy;
+    
+    vec4 tex = texture(iChannel0, xy);
+    vec4 bg = texture(iChannel1, bgxy);
+    vec4 result = tex;
+    
+    if (tex.g >= 0.4 && tex.r <= 0.3 && tex.b <= 0.3) {
+        result = bg;
+    } else {
+        result = blur(xy);
+        float avg = (result.r + result.g + result.b) / 3.0;
+        result = vec4(avg, avg, avg, 1.0);
+        //result = vec4(0.15, 0.15, 0.15, 1.0);
+        
+    }
+	fragColor = result;
+}
